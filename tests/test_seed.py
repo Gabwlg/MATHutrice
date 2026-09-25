@@ -3,7 +3,7 @@ import uuid
 from sqlmodel import Session, SQLModel, create_engine, select
 
 from mathutrice import models
-from mathutrice.fonctions_python.referentiel import REFERENTIEL
+from mathutrice.referentiel import REFERENTIEL
 from mathutrice.fonctions_python.seed import (
     NOTIONS,
     USERS,

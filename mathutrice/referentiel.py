@@ -1,11 +1,12 @@
 """
 referentiel.py — Données de référence : notions et compétences
 
-Pure data, sans dépendance au client LLM. Séparé de main.py pour que
-seed.py (et tout autre code qui n'a besoin que des données) puisse
+Pure data, sans dépendance au client LLM. Vit à la racine du package (et non
+dans fonctions_python) pour que seed.py et lacune_evaluation puissent
 l'importer sans déclencher la chaîne d'imports de génération de questions,
 qui échoue à l'import si LLM_BASE_URL / LLM_API_KEY / LLM_MODEL ne sont
-pas définies (voir llm_client.py).
+pas définies (voir llm_client.py) — et sans créer de dépendance circulaire
+entre fonctions_python et lacune_evaluation.
 """
 
 REFERENTIEL = {

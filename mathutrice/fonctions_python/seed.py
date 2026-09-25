@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, SQLModel, select
 
 from mathutrice import models
-from mathutrice.fonctions_python.referentiel import REFERENTIEL
+from mathutrice.referentiel import REFERENTIEL
 
 # `referentiel_key` is the stable slug the rest of the app looks notions up
 # by (see session_generator.get_notion_by_referentiel_key and its callers in
