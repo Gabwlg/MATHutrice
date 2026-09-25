@@ -1,11 +1,14 @@
-from mathutrice.database import engine
-from sqlmodel import Session, SQLModel
+import uuid
+
+from sqlmodel import Session, SQLModel, select
+
 from mathutrice import models
 
-# Crée toutes les tables
-SQLModel.metadata.create_all(engine)
-
-notions = [
+# `referentiel_key` is the stable slug the rest of the app looks notions up
+# by (see session_generator.get_notion_by_referentiel_key and its callers in
+# app.py). `notion_id` is a surrogate UUID primary key, generated here and
+# never derived from the slug.
+NOTIONS = [
     (
         "trigonometrie",
         "Trigonométrie",
@@ -43,15 +46,31 @@ notions = [
     ),
 ]
 
-with Session(engine) as session:
-    for notion_id, title, description in notions:
-        existing = session.get(models.Notion, notion_id)
-        if not existing:
-            notion = models.Notion(
-                notion_id=notion_id,
+
+def seed_notions(session: Session) -> None:
+    for referentiel_key, title, description in NOTIONS:
+        existing = session.exec(
+            select(models.Notion).where(
+                models.Notion.referentiel_key == referentiel_key
+            )
+        ).first()
+        if existing:
+            continue
+        session.add(
+            models.Notion(
+                notion_id=uuid.uuid4(),
+                referentiel_key=referentiel_key,
                 title=title,
                 description=description,
             )
-            session.add(notion)
+        )
     session.commit()
+
+
+if __name__ == "__main__":
+    from mathutrice.database import engine
+
+    SQLModel.metadata.create_all(engine)
+    with Session(engine) as session:
+        seed_notions(session)
     print("Notions insérées.")

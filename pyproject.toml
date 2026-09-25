@@ -37,4 +37,12 @@ wheel-exclude = ["mathutrice/rag_documents"]
 [dependency-groups]
 dev = [
     "tach~=0.35.0",
+    "pytest~=9.1.0",
 ]
+
+[tool.pytest.ini_options]
+# Scoped to the top-level suite tach.toml already carves out (see its
+# `exclude` comment). mathutrice/fonctions_python/test_entrainement.py
+# matches pytest's discovery pattern but is a runnable script, not a test
+# module, and importing it requires a live LLM endpoint.
+testpaths = ["tests"]
