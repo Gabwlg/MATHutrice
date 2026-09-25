@@ -17,6 +17,7 @@ from sqlmodel import SQLModel, select, delete
 from dotenv import load_dotenv
 from mathutrice.database import engine, get_session, Session
 from mathutrice.database import Session as DBSession
+from mathutrice.fonctions_python.seed import seed_competences, seed_notions, seed_users
 from apscheduler.schedulers.background import BackgroundScheduler
 from decimal import Decimal
 from mathutrice import models
@@ -51,6 +52,16 @@ def get_referentiel():
 
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
+
+    with DBSession(engine) as session:
+        seed_notions(session)
+        seed_competences(session)
+
+        # Demo accounts are only meaningful for the /dev/login flow; seeding
+        # a fixed Admin account outside AUTH_MODE=dev would let anyone whose
+        # real Entra email happens to match it inherit that role.
+        if AUTH_MODE == "dev":
+            seed_users(session)
 
 
 # ------------------------------------------------------------------
