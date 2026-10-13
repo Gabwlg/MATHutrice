@@ -169,5 +169,12 @@ App Service app (Linux, B1, always on) running a container image.
   `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_RESOURCE_GROUP` and
   `AZURE_WEBAPP_NAME`. The workflow signs in to Azure through OpenID Connect and
   stores no Azure password.
+- **Production, by Promotion only.** A run of the workflow started by hand
+  (`gh workflow run architecture.yml --ref course-2026-fallback-ci`) reads the
+  push runs on this branch, newest first, logs each run whose `deploy to
+  staging` job did not pass as skipped, and deploys the image of the first that
+  passed to production, with production's own settings. It builds nothing, so
+  production only receives an image staging already received. With no such run
+  it deploys nothing.
 - **Known limit.** SQLite lives on the container's own disk, so the data is
   reset at every deploy and restart.
