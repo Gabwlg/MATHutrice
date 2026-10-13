@@ -29,7 +29,7 @@ Promotion is the workflow you start by hand to do it.
 Production signals: what your fork reports to its own PostHog project: its errors and its logs.
 GitHub Environment: a named set of variables and secrets in your fork's settings, given only to
 a workflow job that runs in it.
-Published 13 October 2026Page 2 of 11Complex Web Services 2026
+Published 13 October 2026Page 2 of 12Complex Web Services 2026
 Preliminary Step: update Matt Pocock's skills to v1.3 (5 min, before
 step 1)
 Done when
@@ -66,7 +66,7 @@ only true
 az webapp create --name <you>-<project>-production --resource-group <you>-forks --plan
 <you>-forks --container-image-name mcr.microsoft.com/appsvc/staticsite:latest --https-
 only true
-Published 13 October 2026Page 3 of 11Complex Web Services 2026
+Published 13 October 2026Page 3 of 12Complex Web Services 2026
 # Always on: otherwise an idle app stops, and the next request waits for it to start
 az webapp config set --name <you>-<project>-staging --resource-group <you>-forks --
 always-on true
@@ -80,14 +80,18 @@ docker-container-logging filesystem
 # The identity your pipeline signs in as. It has no password to leak.
 # Keep the clientId and principalId it prints
 az identity create --name github-deploy --resource-group <you>-forks
-# It trusts GitHub for your fork's two environments, and nothing else.
-# <your fork> is owner/name, as GitHub writes it
+# How GitHub names your fork to Azure, with its owner's and its own number.
+# <your fork> is owner/name.
+# Keep what it prints, such as repo:octocat@583231/OceENS@1296269
+gh api repos/<your fork>/actions/oidc/customization/sub --jq .sub_claim_prefix
+# The identity trusts GitHub for your fork's two environments, and nothing else.
+# <your subject> is what gh api printed, as it printed it
 az identity federated-credential create --name staging --identity-name github-deploy --
 resource-group <you>-forks --issuer https://token.actions.githubusercontent.com --
-subject repo:<your fork>:environment:staging --audiences api://AzureADTokenExchange
+subject <your subject>:environment:staging --audiences api://AzureADTokenExchange
 az identity federated-credential create --name production --identity-name github-deploy
 --resource-group <you>-forks --issuer https://token.actions.githubusercontent.com --
-subject repo:<your fork>:environment:production --audiences api://AzureADTokenExchange
+subject <your subject>:environment:production --audiences api://AzureADTokenExchange
 # It may deploy to the apps of this resource group alone.
 # The scope is the id az group create printed
 az role assignment create --assignee-object-id <principalId> --assignee-principal-type
@@ -110,12 +114,12 @@ gh variable set AZURE_SUBSCRIPTION_ID --env staging --body <subscription id> --r
 <your fork>
 gh variable set AZURE_SUBSCRIPTION_ID --env production --body <subscription id> --repo
 <your fork>
+Published 13 October 2026Page 4 of 12Complex Web Services 2026
 # Your resource group
 gh variable set AZURE_RESOURCE_GROUP --env staging --body <you>-forks --repo <your
 fork>
 gh variable set AZURE_RESOURCE_GROUP --env production --body <you>-forks --repo <your
 fork>
-Published 13 October 2026Page 4 of 11Complex Web Services 2026
 # Each environment's own app
 gh variable set AZURE_WEBAPP_NAME --env staging --body <you>-<project>-staging --repo
 <your fork>
@@ -132,6 +136,10 @@ The region command prints no region of the list? Create nothing. Show its output
 Instructor.
 A command failed? Read its error, fix the value, and run that command again. No Fallback
 Branch creates your Azure resources: they are yours.
+Your first deploy fails at Log in to Azure with AADSTS700213 ? Your credential's subject is not
+the one GitHub sent. Copy the subject from the error: it is in quotes after assertion subject .
+Run that environment's az identity federated-credential create command again, with
+that subject after --subject . Then run the deploy again.
 You should be able to
 Say which resource spends your credit, and what someone who changed your fork's workflow could
 do as your identity.
@@ -142,6 +150,7 @@ its last run is green.
 Your two apps, the identity your pipeline signs in as, and your two GitHub Environments with
 their Azure variables, from step 1.
 Your Mistral key, and the production dev sign-in key from the Instructor's Teams message.
+Published 13 October 2026Page 5 of 12Complex Web Services 2026
 Why this step matters
 What you watch means nothing until you know which commit is running, so the pipeline comes first.
 This step builds the first half of a pipeline that deploys each green commit to Fork staging, then
@@ -150,7 +159,6 @@ Do
 1. Give each GitHub Environment its secrets. Your deploy writes them to its app, so each app's
 settings live beside the pipeline that uses them. Each environment gets its own secrets, so
 staging and production never share a session. Never commit them, and never use
-Published 13 October 2026Page 5 of 11Complex Web Services 2026
 .env.example 's values. Your laptop, staging and production spend one Mistral quota: a run on
 your laptop can cause a 429 in Fork production.
 Fork staging and Fork production run the same image, and both sign in through the
@@ -183,13 +191,15 @@ is Private, make it Public: Azure pulls it without a password.
 See the Worked Example
 The other Project's pipeline, and its green run. OcéENS: MATHutrice's EPF-MDE/MATHutrice#100,
 and its green run. MATHutrice: OcéENS's EPF-MDE/OceENS#169, and its green run.
+Published 13 October 2026Page 6 of 12Complex Web Services 2026
 Done when
 Fork staging runs your last pushed commit, deployed by the run that passed on it, with every process
 the old launcher started.
 Stuck?
 The deploy times out, and your app's log says ImagePullFailure , forbidden or
 unauthorized? Check your package's visibility, as in Do, then run the deploy again.
-Published 13 October 2026Page 6 of 11Complex Web Services 2026
+The deploy fails at Log in to Azure with AADSTS700213 ? Recreate the credential with the
+subject in the error, as step 1's Stuck? says.
 Fork not answering on the host at 0:45? Take the Ready-to-Deploy Fallback Branch, course-
 2026-fallback-ready-to-deploy : push it to your fork, then make it your default branch in your
 fork's Settings → General → Default branch. Merge your Lab 2 work into it in one pull request. It
@@ -214,6 +224,7 @@ Do
 1. Add a Promotion you start by hand: it deploys the image of staging's last green deploy to Fork
 production, and builds nothing.
 2. Run it once.
+Published 13 October 2026Page 7 of 12Complex Web Services 2026
 See the Worked Example
 A Promotion skipping a failed staging deploy. OcéENS: MATHutrice's failed deploy and Promotion.
 MATHutrice: OcéENS's failed deploy and Promotion.
@@ -223,7 +234,6 @@ Stuck?
 No Fallback Branch carries a Promotion either, because C2 grades it with your pipeline. Read how the
 Worked Example's Promotion skips the failed deploy. Not done at 1:20? Go on to step 4, and finish
 your Promotion before step 5 needs it.
-Published 13 October 2026Page 7 of 11Complex Web Services 2026
 You should be able to
 Say what your Promotion does when staging's last deploy failed.
 4. Wire your production signals into PostHog (1:20–2:05)
@@ -246,6 +256,7 @@ POSTHOG_PROJECT_TOKEN=phc_<your token>
 POSTHOG_HOST=https://eu.i.posthog.com
 # What each error and log line is tagged with: staging or production
 POSTHOG_ENVIRONMENT=staging
+Published 13 October 2026Page 8 of 12Complex Web Services 2026
 3. Have your agent wire Error tracking, identity and Logs, in every process your service runs. It
 pins posthog at 7.60.0 and OpenTelemetry at 1.44.0 : the versions the Worked Example was
 proven with.
@@ -258,7 +269,6 @@ they reached. Count them in surveys, not users.
 See the Worked Example
 The other Project's wiring. OcéENS: MATHutrice's 4510114 , b8f9a13 , 578e407 . MATHutrice:
 OcéENS's 1c673c9 , e453266 , 6d36ae5 .
-Published 13 October 2026Page 8 of 11Complex Web Services 2026
 Done when
 With the three settings unset, your tests and the smoke test pass as before.
 Stuck?
@@ -277,6 +287,7 @@ signals with your own exception, before Fork production gets them.
 Do
 1. Add a temporary route that raises an exception, and deploy it to staging. Sign in and call it. A
 404 means the old version still serves: call again a minute later.
+Published 13 October 2026Page 9 of 12Complex Web Services 2026
 2. Find your exception in Error tracking: your email, environment staging . Find a line your
 service wrote in Logs.
 3. Remove the route, and deploy staging again.
@@ -292,7 +303,6 @@ min(timestamp) AS first_seen, max(timestamp) AS last_seen
 FROM events
 WHERE event = '$exception' AND properties.environment = 'production'
 GROUP BY issue ORDER BY exceptions DESC
-Published 13 October 2026Page 9 of 11Complex Web Services 2026
 MATHutrice:
 SELECT properties.$exception_issue_id AS issue,
 any(properties.$exception_types) AS types,
@@ -314,6 +324,7 @@ as you would the Ready-to-Deploy one in step 2. Keep its wiring. Set your settin
 route, and deploy again. It costs the experience, not the grade: the proof stays yours.
 You should be able to
 Decide honestly whether the exception you saw is yours.
+Published 13 October 2026Page 10 of 12Complex Web Services 2026
 6. Point Fork production at the URL you're given, and find your own
 log line (2:25–2:45)
 You start with
@@ -323,7 +334,6 @@ Why this step matters
 Fork production is the environment watched from now on, so it calls its LLM through the URL you are
 given, and your fork names its address. This step leaves Fork production calling its LLM through that
 URL, and named in your fork's production.json .
-Published 13 October 2026Page 10 of 11Complex Web Services 2026
 Do
 1. Point Fork production's LLM calls at the URL you are given, ending in /oceens/<token>/v1 or
 /mathutrice/<token>/v1 . It relays your Mistral key and never stores it. Staging, like your
@@ -346,13 +356,13 @@ service writes on its own, when it starts or every few minutes.
 Stuck?
 No line in Logs? Logs are sent in batches: wait a minute. Then check that your action goes through a
 logging call in your code.
+Published 13 October 2026Page 11 of 12Complex Web Services 2026
 You should be able to
 Point at the code that wrote it, and say why a startup line proves nothing.
 7. Open your Error Ledger (2:45–3:00)
 You start with
 Your saved query, Production errors by issue, with users reached , from step 5.
 Your Design Document, an issue on your Project's upstream.
-Published 13 October 2026Page 11 of 11Complex Web Services 2026
 Why this step matters
 Watching starts with a place to write down what you see. This step opens your Error Ledger, its first
 entry copied from your saved query.
@@ -377,6 +387,7 @@ Say which row you would look at first, by rate and users reached.
 Checklist
 Matt Pocock's skills, if your coding agent uses them, show v1.3 or later, and no file on the
 branch you work from still names CONTEXT.md .
+Published 13 October 2026Page 12 of 12Complex Web Services 2026
 az webapp list --resource-group <you>-forks -o table lists your two apps, each
 answers at its address, and each GitHub Environment holds its five Azure variables.
 Fork staging runs your last pushed commit, deployed by the run that passed on it, with
