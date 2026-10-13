@@ -15,3 +15,7 @@ Single-context: one `GLOSSARY.md` + `docs/adr/` at the repo root. See `docs/agen
 ### Package boundaries
 
 Package boundaries are machine-checked: read `mathutrice/README.md` before adding a package, or importing across one.
+
+### Lab 3
+
+Lab 3 work (Complex Web Services): read `docs/agents/lab3.md` (the Lab page) and `docs/agents/lab3-brief.md` (the Agent Brief: its limits) before starting a step. Steps 5 and 7 are tutor-only.
