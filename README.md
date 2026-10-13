@@ -147,3 +147,27 @@ python scripts/check_cycles.py
 ## Licence
 
 MIT — see [`LICENSE`](LICENSE).
+
+## Deploying on Azure App Service
+
+`.github/workflows/architecture.yml` deploys this fork to **Fork staging**, an
+App Service app (Linux, B1, always on) running a container image.
+
+- **On green.** A push to `course-2026-fallback-ci` whose `architecture` job
+  passes is built into one image, tagged with its commit and pushed to GHCR
+  (`ghcr.io/gabwlg/mathutrice:<commit>`), then deployed to staging. A pull request
+  or a red run deploys nothing.
+- **Which commit runs.** The image holds its commit as `REVISION`, and the app
+  sends it in the `X-Revision` header of every response. The deploy passes only
+  once `/dev/login` answers `200` with that commit, so the previous container,
+  still answering, does not count.
+- **One process.** The image starts `uvicorn mathutrice.app:app`. The hourly
+  cleanup job and the startup seed run inside it, in the app's `lifespan`.
+- **Settings.** The workflow writes them to the app at every deploy. The
+  `staging` GitHub Environment holds the secrets `SESSION_SECRET`,
+  `DEV_LOGIN_KEY` and `LLM_API_KEY`, and the variables `AZURE_CLIENT_ID`,
+  `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_RESOURCE_GROUP` and
+  `AZURE_WEBAPP_NAME`. The workflow signs in to Azure through OpenID Connect and
+  stores no Azure password.
+- **Known limit.** SQLite lives on the container's own disk, so the data is
+  reset at every deploy and restart.
